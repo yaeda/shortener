@@ -26,8 +26,8 @@ runs:
             const {url, alias} = urls[i];
             await fs.writeFile(`./_site/${alias}.html`, `<!DOCTYPE html><meta http-equiv="refresh" content="0;url=${url}">`)
           }
-        env:
-          JSON_DATABASE_PATH: ${{ inputs.json-database-path }}
+      env:
+        JSON_DATABASE_PATH: ${{ inputs.json-database-path }}
     - name: Upload Artifact
       uses: actions/upload-pages-artifact@v1
       with:
