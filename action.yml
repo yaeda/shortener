@@ -17,14 +17,17 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
+          const { JSON_DATABASE_PATH } = process.env;
           const fs = require('fs').promises;
-          const urls = require(${{ inputs.json-database-path }});
+          const urls = require(JSON_DATABASE_PATH);
           await io.mkdirP('./_site/');
           await exec.exec('touch ./_site/.nojekyll');
           for (var i = 0; i < urls.length; i++) {
             const {url, alias} = urls[i];
             await fs.writeFile(`./_site/${alias}.html`, `<!DOCTYPE html><meta http-equiv="refresh" content="0;url=${url}">`)
           }
+        env:
+          JSON_DATABASE_PATH: ${{ inputs.json-database-path }}
     - name: Upload Artifact
       uses: actions/upload-pages-artifact@v1
       with:
