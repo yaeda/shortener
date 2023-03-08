@@ -25,8 +25,16 @@ runs:
           const fs = require('fs').promises;
           const urls = require(JSON_DATABASE_PATH);
           await io.mkdirP('./_site/');
+          // .nojekyll
           await exec.exec('touch ./_site/.nojekyll');
-          await io.cp(NOT_FOUND_FILE_PATH, './_site/404.html');
+          // 404.html
+          try {
+            await io.cp(NOT_FOUND_FILE_PATH, './_site/404.html');
+          } catch(error) {
+            core.info(error.message);
+            core.info('skip placement of 404.html');
+          }
+          // alias.html
           for (var i = 0; i < urls.length; i++) {
             const {url, alias} = urls[i];
             await fs.writeFile(`./_site/${alias}.html`, `<!DOCTYPE html><meta http-equiv="refresh" content="0;url=${url}">`)
