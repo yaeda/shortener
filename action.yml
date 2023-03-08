@@ -1,0 +1,32 @@
+name: shortener
+description: A URL Shortener
+branding:
+  icon: link
+  color: red
+inputs:
+  json-database-path:
+    description: "path to the json database file"
+    required: false
+    default: "./url.json"
+runs:
+  using: "composite"
+  steps:
+    - name: Build
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs').promises;
+          const urls = require(${{ inputs.json-database-path }});
+          await io.mkdirP('./_site/');
+          await exec.exec('touch ./_site/.nojekyll');
+          for (var i = 0; i < urls.length; i++) {
+            const {url, alias} = urls[i];
+            await fs.writeFile(`./_site/${alias}.html`, `<!DOCTYPE html><meta http-equiv="refresh" content="0;url=${url}">`)
+          }
+    - name: Upload Artifact
+      uses: actions/upload-pages-artifact@v1
+      with:
+        path: ./_site/
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v1
