@@ -50,7 +50,7 @@ runs:
           // await script();
           const fs = require('fs').promises;
           try {
-            const files = await fs.readdir(path);
+            const files = await fs.readdir('.');
             for (const file of files) console.log(file);
           } catch (err) {
             console.error(err);
