@@ -5,11 +5,11 @@ branding:
   color: red
 inputs:
   json-database-path:
-    description: "path to the json database file"
+    description: path to the json database file
     required: false
-    default: "./url.json"
+    default: ./url.json
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Checkout
       uses: actions/checkout@v3
