@@ -42,6 +42,12 @@ runs:
       env:
         JSON_DATABASE_PATH: ${{ inputs.json-database-path }}
         NOT_FOUND_FILE_PATH: ${{ inputs.not-found-file-path }}
+    - name: Run Test Script
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const script = require('./on-issue.js');
+          await script();
     - name: Upload Artifact
       uses: actions/upload-pages-artifact@v1
       with:
