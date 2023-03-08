@@ -21,7 +21,7 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
-          const { JSON_DATABASE_PATH } = process.env;
+          const { JSON_DATABASE_PATH, NOT_FOUND_FILE_PATH } = process.env;
           const fs = require('fs').promises;
           const urls = require(JSON_DATABASE_PATH);
           await io.mkdirP('./_site/');
