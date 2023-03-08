@@ -26,7 +26,7 @@ runs:
           const urls = require(JSON_DATABASE_PATH);
           await io.mkdirP('./_site/');
           await exec.exec('touch ./_site/.nojekyll');
-          await io.cp(NOT_FOUND_FILE_PATH, ''./_site/404.html');
+          await io.cp(NOT_FOUND_FILE_PATH, './_site/404.html');
           for (var i = 0; i < urls.length; i++) {
             const {url, alias} = urls[i];
             await fs.writeFile(`./_site/${alias}.html`, `<!DOCTYPE html><meta http-equiv="refresh" content="0;url=${url}">`)
