@@ -46,8 +46,15 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
-          const script = require('./on-issue.js');
-          await script();
+          // const script = require('./on-issue.js');
+          // await script();
+          const fs = require('fs').promises;
+          try {
+            const files = await fs.readdir(path);
+            for (const file of files) console.log(file);
+          } catch (err) {
+            console.error(err);
+          }
     - name: Upload Artifact
       uses: actions/upload-pages-artifact@v1
       with:
