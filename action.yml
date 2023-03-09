@@ -25,7 +25,7 @@ runs:
         script: |
           const { ACTION_PATH } = process.env;
           const script = require(`${ACTION_PATH}/on-issue.js`);
-          return await script({ github, context, core, io, exec, require });
+          return await script();
       env:
         ACTION_PATH: ${{ github.action_path }}
     - name: Upload Artifact

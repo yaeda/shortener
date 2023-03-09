@@ -38,7 +38,7 @@ const fs = require("fs").promises;
 //   }
 // };
 
-module.exports = async ({ github, context, core, io, exec, require }) => {
+module.exports = async () => {
   // switch (context.eventName) {
   //   case "push":
   //     // case "workflow_dispatch":
@@ -48,12 +48,9 @@ module.exports = async ({ github, context, core, io, exec, require }) => {
   //     await onIssue(github, context.repo, context.payload);
   //     return "success:on-issue";
   // }
-  try {
-    const files = await fs.readdir(".");
-    for (const file of files) console.log(file);
-  } catch (err) {
-    console.error(err);
-  }
+  console.log("================");
+  console.log(context.eventName);
+  console.log("================");
   // TODO: notice event_name information
   return "error:invalid-event_name";
 };
