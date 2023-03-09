@@ -1,5 +1,8 @@
 const onPush = async ({ core, io, exec, options }) => {
-  console.log({ options.JSON_DATABASE_PATH, options.NOT_FOUND_FILE_PATH });
+  console.log({
+    JSON_DATABASE_PATH: options.JSON_DATABASE_PATH,
+    NOT_FOUND_FILE_PATH: options.NOT_FOUND_FILE_PATH,
+  });
   await io.mkdirP("./_site/");
 
   // .nojekyll
