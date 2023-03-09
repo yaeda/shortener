@@ -38,7 +38,7 @@ const fs = require("fs").promises;
 //   }
 // };
 
-module.exports = async () => {
+module.exports = async ({ context }) => {
   // switch (context.eventName) {
   //   case "push":
   //     // case "workflow_dispatch":
