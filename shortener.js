@@ -1,6 +1,7 @@
 const onPush = async ({ core, io, exec }) => {
   const JSON_DATABASE_PATH = core.getInput("json-database-path");
   const NOT_FOUND_FILE_PATH = core.getInput("not-found-file-path");
+  console.log({ JSON_DATABASE_PATH, NOT_FOUND_FILE_PATH });
   await io.mkdirP("./_site/");
 
   // .nojekyll
