@@ -1,7 +1,5 @@
-const onPush = async ({ core, io, exec }) => {
-  const JSON_DATABASE_PATH = core.getInput("json-database-path");
-  const NOT_FOUND_FILE_PATH = core.getInput("not-found-file-path");
-  console.log({ JSON_DATABASE_PATH, NOT_FOUND_FILE_PATH });
+const onPush = async ({ core, io, exec, options }) => {
+  console.log({ options.JSON_DATABASE_PATH, options.NOT_FOUND_FILE_PATH });
   await io.mkdirP("./_site/");
 
   // .nojekyll
@@ -9,7 +7,7 @@ const onPush = async ({ core, io, exec }) => {
 
   // 404.html
   try {
-    await io.cp(NOT_FOUND_FILE_PATH, "./_site/404.html");
+    await io.cp(options.NOT_FOUND_FILE_PATH, "./_site/404.html");
   } catch (error) {
     core.info(error.message);
     core.notice("skip placement of 404.html");
@@ -17,7 +15,7 @@ const onPush = async ({ core, io, exec }) => {
 
   // alias.html
   const fs = require("fs").promises;
-  const urls = require(JSON_DATABASE_PATH);
+  const urls = require(options.JSON_DATABASE_PATH);
   for (var i = 0; i < urls.length; i++) {
     const { url, alias } = urls[i];
     await fs.writeFile(
@@ -37,11 +35,11 @@ const onPush = async ({ core, io, exec }) => {
 //   }
 // };
 
-module.exports = async ({ github, context, core, io, exec }) => {
+module.exports = async ({ github, context, core, io, exec, options }) => {
   switch (context.eventName) {
     case "push":
     case "workflow_dispatch":
-      await onPush({ core, io, exec });
+      await onPush({ core, io, exec, options });
       return "success:on-push";
     // case "issues":
     //   await onIssue(github, context.repo, context.payload);
