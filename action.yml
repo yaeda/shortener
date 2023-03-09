@@ -24,8 +24,8 @@ runs:
         result-encoding: string
         script: |
           const { ACTION_PATH } = process.env;
-          const script = require(`${ACTION_PATH}/on-issue.js`);
-          return await script({ context });
+          const script = require(`${ACTION_PATH}/shortener.js`);
+          return await script({ github, context, core, io, exec });
       env:
         ACTION_PATH: ${{ github.action_path }}
     - name: Upload Artifact
