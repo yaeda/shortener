@@ -29,10 +29,10 @@ runs:
       env:
         ACTION_PATH: ${{ github.action_path }}
     - name: Upload Artifact
-      if: ${{ steps.shortener-script.outputs.result == "success:on-push" }}
+      if: ${{ steps.shortener-script.outputs.result == 'success:on-push' }}
       uses: actions/upload-pages-artifact@v1
       with:
         path: ./_site/
     - name: Deploy to GitHub Pages
-      if: ${{ steps.shortener-script.outputs.result == "success:on-push" }}
+      if: ${{ steps.shortener-script.outputs.result == 'success:on-push' }}
       uses: actions/deploy-pages@v1
