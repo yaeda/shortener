@@ -25,7 +25,7 @@ runs:
         script: |
           const { ACTION_PATH } = process.env;
           const script = require(`${ACTION_PATH}/shortener.js`);
-          return await script({ github, context, core, io, exec, options: process.env });
+          return await script({ github, context, core, io, exec, require, options: process.env });
       env:
         ACTION_PATH: ${{ github.action_path }}
         JSON_DATABASE_PATH: ${{ inputs.json-database-path }}

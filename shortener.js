@@ -1,8 +1,4 @@
-const onPush = async ({ core, io, exec, options }) => {
-  console.log({
-    JSON_DATABASE_PATH: options.JSON_DATABASE_PATH,
-    NOT_FOUND_FILE_PATH: options.NOT_FOUND_FILE_PATH,
-  });
+const onPush = async ({ core, io, exec, require, options }) => {
   await io.mkdirP("./_site/");
 
   // .nojekyll
@@ -38,11 +34,19 @@ const onPush = async ({ core, io, exec, options }) => {
 //   }
 // };
 
-module.exports = async ({ github, context, core, io, exec, options }) => {
+module.exports = async ({
+  github,
+  context,
+  core,
+  io,
+  exec,
+  require,
+  options,
+}) => {
   switch (context.eventName) {
     case "push":
     case "workflow_dispatch":
-      await onPush({ core, io, exec, options });
+      await onPush({ core, io, exec, require, options });
       return "success:on-push";
     // case "issues":
     //   await onIssue(github, context.repo, context.payload);
