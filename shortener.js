@@ -35,6 +35,9 @@ const onIssue = (github, repo, { action, label, issue, sender }) => {
     .split("\n")
     .filter((line) => line.length && line[0] !== "#");
 
+  console.log(issue.body);
+  console.log({ url, alias });
+
   // alias validation
   if (alias === "_No respnse_") {
     // create suggestion
@@ -47,7 +50,7 @@ const onIssue = (github, repo, { action, label, issue, sender }) => {
       .replace(/\=/g, "");
     github.rest.issues.createComment({
       owner: repo.owner,
-      repo: repo.name,
+      repo: repo.repo,
       issue_number: issue.number,
       body: `:information_source: ${url} -> https://${repo.owner}.github.io/${repo.name}/${suggestion}`,
     });
@@ -56,7 +59,7 @@ const onIssue = (github, repo, { action, label, issue, sender }) => {
     if (!isValid) {
       github.rest.issues.createComment({
         owner: repo.owner,
-        repo: repo.name,
+        repo: repo.repo,
         issue_number: issue.number,
         body: `:warning: **${alias}** is not valid.\n
         Only alphanumeric characters, \`-\` and \`_\` can be used for alias.\n
@@ -65,7 +68,7 @@ const onIssue = (github, repo, { action, label, issue, sender }) => {
     } else {
       github.rest.issues.createComment({
         owner: repo.owner,
-        repo: repo.name,
+        repo: repo.repo,
         issue_number: issue.number,
         body: `:information_source: ${url} -> https://${repo.owner}.github.io/${repo.name}/${alias}`,
       });
