@@ -24,17 +24,53 @@ const onPush = async ({ core, io, exec, require, options }) => {
   }
 };
 
-const onIssue = (github, repo, { action, label, issue }) => {
+const onIssue = (github, repo, { action, label, issue, sender }) => {
   console.log({ action });
-  console.log(issue.number, issue.title);
-  console.log(issue.body);
-  // switch (action) {
-  //   case "opened":
-  //   case "edited":
-  //     const { title, body, number } = issue;
-  //     const { owner, repo: name } = repo;
-  //     const [firstLine, secondLine, ...restLines] = body.split("\n");
-  // }
+  if (action !== "opened" || action !== "edited") {
+    return;
+  }
+
+  // url and alias
+  const [url, alias] = issue.body
+    .split("\n")
+    .filter((line) => line.length && line[0] !== "#");
+
+  // alias validation
+  if (alias === "_No respnse_") {
+    // create suggestion
+    const crypto = require("crypto");
+    const suggestion = crypto
+      .randomBytes(4)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/\=/g, "");
+    github.rest.issues.createComment({
+      owner: repo.owner,
+      repo: repo.name,
+      issue_number: issue.number,
+      body: `:information_source: ${url} -> https://${repo.owner}.github.io/${repo.name}/${suggestion}`,
+    });
+  } else {
+    const isValid = /^[\w-]+$/.test(alias);
+    if (!isValid) {
+      github.rest.issues.createComment({
+        owner: repo.owner,
+        repo: repo.name,
+        issue_number: issue.number,
+        body: `:warning: **${alias}** is not valid.\n
+        Only alphanumeric characters, \`-\` and \`_\` can be used for alias.\n
+        @${sender.name} Please edit issue to fix it.`,
+      });
+    } else {
+      github.rest.issues.createComment({
+        owner: repo.owner,
+        repo: repo.name,
+        issue_number: issue.number,
+        body: `:information_source: ${url} -> https://${repo.owner}.github.io/${repo.name}/${alias}`,
+      });
+    }
+  }
 };
 
 module.exports = async ({
