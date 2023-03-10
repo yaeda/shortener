@@ -26,7 +26,7 @@ const onPush = async ({ core, io, exec, require, options }) => {
 
 const onIssue = (github, repo, { action, label, issue, sender }) => {
   console.log({ action });
-  if (action !== "opened" || action !== "edited") {
+  if (action !== "opened" && action !== "edited") {
     return;
   }
 
