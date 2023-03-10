@@ -32,7 +32,7 @@ const onIssue = (github, repo, { action, label, issue, sender }) => {
 
   // url and alias
   const [url, alias] = issue.body
-    .split("\n")
+    .split(/\r\n|\n|\r/)
     .filter((line) => line.length && line[0] !== "#");
 
   console.log(issue.body);
