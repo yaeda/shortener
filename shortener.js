@@ -24,15 +24,18 @@ const onPush = async ({ core, io, exec, require, options }) => {
   }
 };
 
-// const onIssue = (github, repo, { action, label, issue }) => {
-//   switch (action) {
-//     case "opened":
-//     case "edited":
-//       const { title, body, number } = issue;
-//       const { owner, repo: name } = repo;
-//       const [firstLine, secondLine, ...restLines] = body.split("\n");
-//   }
-// };
+const onIssue = (github, repo, { action, label, issue }) => {
+  console.log({ action });
+  console.log(issue.number, issue.title);
+  console.log(issue.body);
+  // switch (action) {
+  //   case "opened":
+  //   case "edited":
+  //     const { title, body, number } = issue;
+  //     const { owner, repo: name } = repo;
+  //     const [firstLine, secondLine, ...restLines] = body.split("\n");
+  // }
+};
 
 module.exports = async ({
   github,
@@ -48,10 +51,13 @@ module.exports = async ({
     case "workflow_dispatch":
       await onPush({ core, io, exec, require, options });
       return "success:on-push";
-    // case "issues":
-    //   await onIssue(github, context.repo, context.payload);
-    //   return "success:on-issue";
+    case "issues":
+      await onIssue(github, context.repo, context.payload);
+      return "success:on-issue";
   }
-  // TODO: notice event_name information
+
+  core.warning(
+    "yaeda/shortener supports only `push`, `workflow_dispatch` and `issues` events"
+  );
   return "error:invalid-event_name";
 };
