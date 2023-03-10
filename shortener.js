@@ -70,7 +70,7 @@ const onIssue = (github, repo, { action, label, issue, sender }) => {
         owner: repo.owner,
         repo: repo.repo,
         issue_number: issue.number,
-        body: `:information_source: ${url} -> https://${repo.owner}.github.io/${repo.name}/${alias}`,
+        body: `:information_source: ${url} -> https://${repo.owner}.github.io/${repo.repo}/${alias}`,
       });
     }
   }
