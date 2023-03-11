@@ -88,7 +88,10 @@ module.exports = async ({
   console.log(context.actor);
   // console.log(github);
   // console.log(await github.rest.apps.getAuthenticated());
-  console.log(await github.rest.users.getAuthenticated());
+  // console.log(await github.rest.users.getAuthenticated());
+
+  const comments = await github.rest.issues.listComments();
+  comments.data.forEach((comment) => console.log(comment.user));
 
   switch (context.eventName) {
     case "push":
