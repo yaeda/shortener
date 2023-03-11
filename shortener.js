@@ -85,8 +85,8 @@ module.exports = async ({
   require,
   options,
 }) => {
-  console.log(context.actor);
-  // console.log(github);
+  console.log(context);
+  console.log(github);
   // console.log(await github.rest.apps.getAuthenticated());
   // console.log(await github.rest.users.getAuthenticated());
 
