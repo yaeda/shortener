@@ -85,6 +85,9 @@ module.exports = async ({
   require,
   options,
 }) => {
+  console.log(context);
+  console.log(github);
+
   switch (context.eventName) {
     case "push":
     case "workflow_dispatch":
