@@ -85,8 +85,9 @@ module.exports = async ({
   require,
   options,
 }) => {
-  console.log(context);
-  console.log(github);
+  // console.log(context);
+  // console.log(github);
+  console.log(await github.rest.apps.getAuthenticated());
 
   switch (context.eventName) {
     case "push":
