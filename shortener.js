@@ -90,8 +90,16 @@ module.exports = async ({
   // console.log(await github.rest.apps.getAuthenticated());
   // console.log(await github.rest.users.getAuthenticated());
 
-  const comments = await github.rest.issues.listComments();
-  comments.data.forEach((comment) => console.log(comment.user));
+  if (context.payload.issue?.number !== undefined) {
+    const comments = (
+      await github.rest.issues.listComments({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        issue_number: context.payload.issue?.number,
+      })
+    ).data;
+    comments.forEach((comment) => console.log(comment.user));
+  }
 
   switch (context.eventName) {
     case "push":
