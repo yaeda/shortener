@@ -24,7 +24,7 @@ runs:
         result-encoding: string
         script: |
           const { ACTION_PATH } = process.env;
-          const script = require(`${ACTION_PATH}/shortener.js`);
+          const script = require(`${ACTION_PATH}/dist/shortener.js`);
           return await script({ github, context, core, io, exec, require, options: process.env });
       env:
         ACTION_PATH: ${{ github.action_path }}
