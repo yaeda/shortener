@@ -1,0 +1,24 @@
+{
+  "name": "shortener",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A URL Shortener",
+  "main": "lib/shortener.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yaeda/shortener.git"
+  },
+  "author": "Takeshi Yaeda <t.yaeda@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^5.1.1",
+    "@actions/io": "^1.1.2",
+    "@types/node": "^18.15.0",
+    "typescript": "^4.9.5"
+  }
+}
