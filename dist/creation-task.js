@@ -13,7 +13,7 @@ const buildComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, repl
     const indent = "    ";
     const markPassed = ":white_check_mark:";
     const markFailed = ":warning:";
-    const markNotStarted = ":heavy_minus_sign:";
+    const markNotStarted = ":pause_button:";
     const markInprogress = ":hourglass_flowing_sand:";
     // title
     const title = ":robot: _**creating a new short url**_";

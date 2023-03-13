@@ -36,7 +36,7 @@ const buildComment = ({
   const indent = "    ";
   const markPassed = ":white_check_mark:";
   const markFailed = ":warning:";
-  const markNotStarted = ":heavy_minus_sign:";
+  const markNotStarted = ":pause_button:";
   const markInprogress = ":hourglass_flowing_sand:";
 
   // title
