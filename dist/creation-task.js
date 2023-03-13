@@ -146,5 +146,24 @@ const creationTask = async ({ github, require }, repo, payload, options) => {
         issue_number: payload.issue.number,
         body: commendBody,
     });
+    const allPassed = checkProgress.passedUrlValidation &&
+        checkProgress.passedAliasValidation &&
+        checkProgress.passedAliasUniqueness;
+    if (!allPassed ||
+        validatedUrl === undefined ||
+        validatedAlias === undefined) {
+        return;
+    }
+    // update json
+    const dataList = require(options.JSON_DATABASE_PATH);
+    dataList.push({ url: validatedUrl, alias: validatedAlias });
+    const response = await github.rest.repos.createOrUpdateFileContents({
+        ...repo,
+        path: options.JSON_DATABASE_PATH,
+        message: ":link: create a new short url",
+        content: JSON.stringify(dataList, null, 2),
+        branch: `create_short_url-${validatedAlias}`,
+    });
+    console.log(response);
 };
 exports.creationTask = creationTask;

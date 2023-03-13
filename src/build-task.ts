@@ -1,6 +1,7 @@
 import type * as _core from "@actions/core";
 import type * as _exec from "@actions/exec";
 import type * as _io from "@actions/io";
+import fs from "fs/promises";
 import type { Options } from "./options";
 
 export const buildTask = async ({
@@ -30,7 +31,6 @@ export const buildTask = async ({
   }
 
   // alias.html
-  const fs = require("fs").promises;
   const urls = require(options.JSON_DATABASE_PATH);
   for (var i = 0; i < urls.length; i++) {
     const { url, alias } = urls[i];

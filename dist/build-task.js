@@ -1,6 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildTask = void 0;
+const promises_1 = __importDefault(require("fs/promises"));
 const buildTask = async ({ core, io, exec, require, options, }) => {
     await io.mkdirP("./_site/");
     // .nojekyll
@@ -14,11 +18,10 @@ const buildTask = async ({ core, io, exec, require, options, }) => {
         core.notice("skip placement of 404.html");
     }
     // alias.html
-    const fs = require("fs").promises;
     const urls = require(options.JSON_DATABASE_PATH);
     for (var i = 0; i < urls.length; i++) {
         const { url, alias } = urls[i];
-        await fs.writeFile(`./_site/${alias}.html`, `<!DOCTYPE html><meta http-equiv="refresh" content="0;url=${url}">`);
+        await promises_1.default.writeFile(`./_site/${alias}.html`, `<!DOCTYPE html><meta http-equiv="refresh" content="0;url=${url}">`);
     }
 };
 exports.buildTask = buildTask;
