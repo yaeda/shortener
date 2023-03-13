@@ -183,6 +183,7 @@ export const creationTask = async (
         ...context.repo,
         path: path.normalize(options.JSON_DATABASE_PATH),
       });
+      console.log(data);
       if (!Array.isArray(data) && data.html_url !== null) {
         databaseUrl = data.html_url;
         databaseSha = data.sha;

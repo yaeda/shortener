@@ -126,6 +126,7 @@ const creationTask = async ({ github, context, require, }, options) => {
                 ...context.repo,
                 path: path_1.default.normalize(options.JSON_DATABASE_PATH),
             });
+            console.log(data);
             if (!Array.isArray(data) && data.html_url !== null) {
                 databaseUrl = data.html_url;
                 databaseSha = data.sha;
