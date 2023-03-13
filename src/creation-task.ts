@@ -219,11 +219,15 @@ export const creationTask = async (
   }[] = require(options.JSON_DATABASE_PATH);
   dataList.push({ url: validatedUrl, alias: validatedAlias });
 
+  const encodedContent = Buffer.from(
+    JSON.stringify(dataList, null, 2)
+  ).toString("base64");
+
   const response = await github.rest.repos.createOrUpdateFileContents({
     ...repo,
     path: path.normalize(options.JSON_DATABASE_PATH),
     message: ":link: create a new short url",
-    content: JSON.stringify(dataList, null, 2),
+    content: encodedContent,
     branch: `create_short_url-${validatedAlias}`,
   });
 
