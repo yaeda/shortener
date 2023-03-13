@@ -3,9 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const build_task_1 = require("./build-task");
 const creation_task_1 = require("./creation-task");
 module.exports = async ({ github, context, core, io, exec, require, options, }) => {
-    // console.log("=== print context ===");
-    // console.log(context);
-    // console.log("=====================");
     switch (context.eventName) {
         case "push":
         case "workflow_dispatch":
@@ -14,7 +11,7 @@ module.exports = async ({ github, context, core, io, exec, require, options, }) 
         case "issues":
             const payload = context.payload;
             payload.repository.html_url;
-            const { action, issue, sender } = payload;
+            const { action, issue } = payload;
             console.log(action);
             console.log(issue.labels);
             if (action === "opened" || action === "edited") {

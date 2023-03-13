@@ -30,9 +30,6 @@ module.exports = async ({
   require: NodeRequire;
   options: Options;
 }) => {
-  // console.log("=== print context ===");
-  // console.log(context);
-  // console.log("=====================");
   switch (context.eventName) {
     case "push":
     case "workflow_dispatch":
@@ -41,7 +38,7 @@ module.exports = async ({
     case "issues":
       const payload = context.payload as IssuesEvent;
       payload.repository.html_url;
-      const { action, issue, sender } = payload;
+      const { action, issue } = payload;
       console.log(action);
       console.log(issue.labels);
       if (action === "opened" || action === "edited") {

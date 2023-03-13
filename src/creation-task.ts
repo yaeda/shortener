@@ -173,6 +173,7 @@ export const creationTask = async (
 
   // database URL
   var databaseUrl = options.JSON_DATABASE_PATH;
+  var databasePath = "";
   var databaseSha = "";
   if (checkProgress.passedAliasValidation) {
     try {
@@ -180,9 +181,9 @@ export const creationTask = async (
         ...context.repo,
         path: path.normalize(options.JSON_DATABASE_PATH),
       });
-      console.log(data);
       if (!Array.isArray(data) && data.html_url !== null) {
         databaseUrl = data.html_url;
+        databasePath = data.path;
         databaseSha = data.sha;
       }
     } catch {}
@@ -236,24 +237,22 @@ export const creationTask = async (
     sha: context.sha,
   });
 
-  console.log(
-    await github.rest.repos.createOrUpdateFileContents({
-      ...context.repo,
-      path: path.normalize(options.JSON_DATABASE_PATH),
-      message: `:link: create a new short url (alias: ${validatedAlias})`,
-      content: encodedContent,
-      branch: branchName,
-      sha: databaseSha,
-    })
-  );
+  // update database file
+  await github.rest.repos.createOrUpdateFileContents({
+    ...context.repo,
+    path: databasePath,
+    message: `:link: create a new short url (alias: ${validatedAlias})`,
+    content: encodedContent,
+    branch: branchName,
+    sha: databaseSha,
+  });
 
-  console.log(
-    await github.rest.pulls.create({
-      ...context.repo,
-      head: branchName,
-      base: context.ref.split("/")[2],
-      title: `:link: create a new short url (alias: ${validatedAlias})`,
-      body: `close #${payload.issue.number}`,
-    })
-  );
+  // create pull request
+  await github.rest.pulls.create({
+    ...context.repo,
+    head: branchName,
+    base: context.ref.split("/")[2],
+    title: `:link: create a new short url (alias: ${validatedAlias})`,
+    body: `close #${payload.issue.number}`,
+  });
 };
