@@ -40,6 +40,7 @@ module.exports = async ({
       return "success:on-push";
     case "issues":
       const payload = context.payload as IssuesEvent;
+      payload.repository.html_url;
       const { action, issue, sender } = payload;
       console.log(action);
       console.log(issue.labels);
@@ -47,7 +48,7 @@ module.exports = async ({
         creationTask(
           { github, require },
           context.repo,
-          { issue, sender },
+          context.payload as IssuesEvent,
           options
         );
         return "success:on-issue";

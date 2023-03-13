@@ -7,7 +7,7 @@ exports.creationTask = void 0;
 const crypto_1 = __importDefault(require("crypto"));
 const issue_comment_1 = require("./issue-comment");
 // build comment
-const buildComment = ({ url, shortUrl, alias, replyName, checkProgress, options, }) => {
+const buildComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, replyName, databaseUrl, checkProgress, }) => {
     // pre definition
     const indent = "    ";
     const markPassed = ":white_check_mark:";
@@ -15,39 +15,29 @@ const buildComment = ({ url, shortUrl, alias, replyName, checkProgress, options,
     const markNotStarted = ":heavy_minus_sign:";
     const markInprogress = ":hourglass_flowing_sand:";
     // title
-    const title = ":robot: _**creating a new short url**_";
+    const title = "## :robot: _**creating a new short url**_";
     // notice and status
-    const notice = [];
-    const status = ["## Status"];
-    if (!checkProgress.passedUrlValidation) {
-        notice.push(`- :warning: **\`${url}\`** is not valid.`);
-        status.push(`- ${markFailed} url validation`);
+    const status = [];
+    if (checkProgress.passedUrlValidation) {
+        status.push(`- ${markPassed} **\`${validatedUrl}\`** is valid`);
     }
     else {
-        status.push(`- ${markPassed} url validation`);
+        status.push(`- ${markFailed} **\`${url}\`** is not valid`);
     }
-    if (!checkProgress.passedAliasValidation) {
-        notice.push(`- :warning: **\`${alias}\`** is not valid.`);
-        notice.push(`${indent}- Only alphanumeric characters, \`-\` and \`_\` can be used for alias.`);
-        status.push(`- ${markFailed} alias validation`);
+    if (checkProgress.passedAliasValidation) {
+        status.push(`- ${markPassed} **\`${validatedAlias}\`** is valid`);
     }
     else {
-        status.push(`- ${markPassed} alias validation`);
+        status.push(`- ${markFailed} **\`${alias}\`** is not valid`);
+        status.push(`${indent}- Only alphanumeric characters, \`-\` and \`_\` can be used for alias.`);
     }
-    if (!checkProgress.passedAliasUniqueness) {
-        // TODO: use url instead of relative path
-        notice.push(`- :warning: **\`${alias}\`** is not unique.`);
-        notice.push(`${indent}- See ${options.JSON_DATABASE_PATH}.`);
-        if (checkProgress.passedAliasValidation) {
-            status.push(`- ${markFailed} alias uniqueness`);
-        }
-        else {
-            status.push(`- ${markNotStarted} alias uniqueness`);
-        }
+    if (checkProgress.passedAliasUniqueness) {
+        status.push(`- ${markPassed} **\`${validatedAlias}\`** is unique`);
     }
     else {
         if (checkProgress.passedAliasValidation) {
-            status.push(`- ${markPassed} alias uniqueness`);
+            status.push(`- ${markFailed} **\`${alias}\`** is not unique`);
+            status.push(`${indent}- See ${databaseUrl}.`);
         }
         else {
             status.push(`- ${markNotStarted} alias uniqueness`);
@@ -56,14 +46,14 @@ const buildComment = ({ url, shortUrl, alias, replyName, checkProgress, options,
     if (checkProgress.passedUrlValidation &&
         checkProgress.passedAliasValidation &&
         checkProgress.passedAliasUniqueness) {
-        notice.push(`:link: ${shortUrl} will point to ${url}`);
         status.push(`- ${markInprogress} PR review & merge`);
+        status.push(`:link: ${shortUrl} will point to ${validateURL}`);
     }
     else {
-        notice.push(`\n@${replyName} Please edit issue to fix above.`);
         status.push(`- ${markNotStarted} PR review & merge`);
+        status.push(`\n@${replyName} Please edit issue to fix above.`);
     }
-    return [title, ...notice, ...status].join("\n");
+    return [title, ...status].join("\n");
 };
 const validateURL = (url) => {
     if (url === undefined) {
@@ -93,14 +83,17 @@ const createUniqueAlias = (jsonDatabasePath, require) => {
     }
     return alias;
 };
-const creationTask = async ({ github, require }, repo, { issue, sender }, options) => {
+const creationTask = async ({ github, require }, repo, payload, options) => {
     const checkProgress = {
         passedUrlValidation: false,
         passedAliasValidation: false,
         passedAliasUniqueness: false,
     };
+    if (payload.issue.body == null) {
+        return;
+    }
     // url and alias
-    const [url, alias] = issue.body
+    const [url, alias] = payload.issue.body
         .split(/\r\n|\n|\r/)
         .filter((line) => line.length && line[0] !== "#");
     // url validation
@@ -119,21 +112,28 @@ const creationTask = async ({ github, require }, repo, { issue, sender }, option
         checkProgress.passedAliasValidation = true;
         checkProgress.passedAliasUniqueness = checkAliasUniqueness(validatedAlias, options.JSON_DATABASE_PATH, require);
     }
-    // TODO: enable custom domain
-    const shortUrl = `https://${repo.owner}.github.io/${repo.repo}/${validatedUrl}`;
+    // TODO: support custom domain
+    const shortUrl = `https://${repo.owner}.github.io/${repo.repo}/${validatedAlias}`;
+    const { data } = await github.rest.repos.getContent({
+        ...repo,
+        path: options.JSON_DATABASE_PATH,
+    });
+    const databaseUrl = !Array.isArray(data) ? data.html_url : null;
+    console.log(databaseUrl);
     const commendBody = buildComment({
-        url: validatedUrl,
+        url,
+        validatedUrl,
         shortUrl,
-        alias: validatedAlias,
-        replyName: sender.name,
+        alias,
+        validatedAlias,
+        replyName: payload.sender.login,
+        databaseUrl,
         checkProgress,
-        options,
     });
     await (0, issue_comment_1.comment)({
         github,
-        owner: repo.owner,
-        repo: repo.repo,
-        issue_number: issue.number,
+        ...repo,
+        issue_number: payload.issue.number,
         body: commendBody,
     });
 };

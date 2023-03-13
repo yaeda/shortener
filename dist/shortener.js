@@ -13,11 +13,12 @@ module.exports = async ({ github, context, core, io, exec, require, options, }) 
             return "success:on-push";
         case "issues":
             const payload = context.payload;
+            payload.repository.html_url;
             const { action, issue, sender } = payload;
             console.log(action);
             console.log(issue.labels);
             if (action === "opened" || action === "edited") {
-                (0, creation_task_1.creationTask)({ github, require }, context.repo, { issue, sender }, options);
+                (0, creation_task_1.creationTask)({ github, require }, context.repo, context.payload, options);
                 return "success:on-issue";
             }
             return "error:on-issue";
