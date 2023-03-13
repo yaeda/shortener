@@ -2,6 +2,7 @@ import type { Octokit } from "@octokit/core";
 import type { Api } from "@octokit/plugin-rest-endpoint-methods/dist-types/types";
 import type { IssuesEvent } from "@octokit/webhooks-types";
 import crypto from "crypto";
+import path from "path";
 import { comment } from "./issue-comment";
 import type { Options } from "./options";
 
@@ -164,11 +165,22 @@ export const creationTask = async (
 
   // TODO: support custom domain
   const shortUrl = `https://${repo.owner}.github.io/${repo.repo}/${validatedAlias}`;
-  const { data } = await github.rest.repos.getContent({
-    ...repo,
-    path: options.JSON_DATABASE_PATH,
-  });
-  const databaseUrl = !Array.isArray(data) ? data.html_url : null;
+  // database URL
+  var databaseUrl = options.JSON_DATABASE_PATH;
+  // if (
+  //   checkProgress.passedAliasValidation &&
+  //   !checkProgress.passedAliasUniqueness
+  // ) {
+  try {
+    const { data } = await github.rest.repos.getContent({
+      ...repo,
+      path: path.normalize(options.JSON_DATABASE_PATH),
+    });
+    if (!Array.isArray(data) && data.html_url !== null) {
+      databaseUrl = data.html_url;
+    }
+  } catch {}
+  // }
   console.log(databaseUrl);
   const commendBody = buildComment({
     url,

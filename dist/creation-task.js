@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.creationTask = void 0;
 const crypto_1 = __importDefault(require("crypto"));
+const path_1 = __importDefault(require("path"));
 const issue_comment_1 = require("./issue-comment");
 // build comment
 const buildComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, replyName, databaseUrl, checkProgress, }) => {
@@ -114,11 +115,23 @@ const creationTask = async ({ github, require }, repo, payload, options) => {
     }
     // TODO: support custom domain
     const shortUrl = `https://${repo.owner}.github.io/${repo.repo}/${validatedAlias}`;
-    const { data } = await github.rest.repos.getContent({
-        ...repo,
-        path: options.JSON_DATABASE_PATH,
-    });
-    const databaseUrl = !Array.isArray(data) ? data.html_url : null;
+    // database URL
+    var databaseUrl = options.JSON_DATABASE_PATH;
+    // if (
+    //   checkProgress.passedAliasValidation &&
+    //   !checkProgress.passedAliasUniqueness
+    // ) {
+    try {
+        const { data } = await github.rest.repos.getContent({
+            ...repo,
+            path: path_1.default.normalize(options.JSON_DATABASE_PATH),
+        });
+        if (!Array.isArray(data) && data.html_url !== null) {
+            databaseUrl = data.html_url;
+        }
+    }
+    catch { }
+    // }
     console.log(databaseUrl);
     const commendBody = buildComment({
         url,
