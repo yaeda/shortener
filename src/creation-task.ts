@@ -231,7 +231,7 @@ export const creationTask = async (
   ).toString("base64");
 
   // create branch
-  const branchName = `create_short_url-${validatedAlias}`;
+  const branchName = `create_short_url-${payload.issue.number}-${validatedAlias}`;
   await github.rest.git.createRef({
     ...context.repo,
     ref: `refs/heads/${branchName}`,
