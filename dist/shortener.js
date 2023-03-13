@@ -18,7 +18,7 @@ module.exports = async ({ github, context, core, io, exec, require, options, }) 
             console.log(action);
             console.log(issue.labels);
             if (action === "opened" || action === "edited") {
-                (0, creation_task_1.creationTask)({ github, require }, context.repo, context.payload, options);
+                (0, creation_task_1.creationTask)({ github, context, require }, options);
                 return "success:on-issue";
             }
             return "error:on-issue";

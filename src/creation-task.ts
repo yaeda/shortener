@@ -1,3 +1,4 @@
+import type { Context } from "@actions/github/lib/context";
 import type { Octokit } from "@octokit/core";
 import type { Api } from "@octokit/plugin-rest-endpoint-methods/dist-types/types";
 import type { IssuesEvent } from "@octokit/webhooks-types";
@@ -122,11 +123,15 @@ const createUniqueAlias = (jsonDatabasePath: string, require: NodeRequire) => {
 };
 
 export const creationTask = async (
-  { github, require }: { github: Octokit & Api; require: NodeRequire },
-  repo: { owner: string; repo: string },
-  payload: IssuesEvent,
+  {
+    github,
+    context,
+    require,
+  }: { github: Octokit & Api; context: Context; require: NodeRequire },
   options: Options
 ): Promise<{ url: string; alias: string } | undefined> => {
+  const payload = context.payload as IssuesEvent;
+
   const checkProgress: CheckProgress = {
     passedUrlValidation: false,
     passedAliasValidation: false,
@@ -164,7 +169,7 @@ export const creationTask = async (
   }
 
   // TODO: support custom domain
-  const shortUrl = `https://${repo.owner}.github.io/${repo.repo}/${validatedAlias}`;
+  const shortUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/${validatedAlias}`;
 
   // database URL
   var databaseUrl = options.JSON_DATABASE_PATH;
@@ -174,7 +179,7 @@ export const creationTask = async (
   ) {
     try {
       const { data } = await github.rest.repos.getContent({
-        ...repo,
+        ...context.repo,
         path: path.normalize(options.JSON_DATABASE_PATH),
       });
       if (!Array.isArray(data) && data.html_url !== null) {
@@ -195,7 +200,7 @@ export const creationTask = async (
   });
   await comment({
     github,
-    ...repo,
+    ...context.repo,
     issue_number: payload.issue.number,
     body: commendBody,
   });
@@ -223,13 +228,31 @@ export const creationTask = async (
     JSON.stringify(dataList, null, 2)
   ).toString("base64");
 
-  const response = await github.rest.repos.createOrUpdateFileContents({
-    ...repo,
-    path: path.normalize(options.JSON_DATABASE_PATH),
-    message: ":link: create a new short url",
-    content: encodedContent,
-    branch: `create_short_url-${validatedAlias}`,
+  // create branch
+  const branchName = `create_short_url-${validatedAlias}`;
+  await github.rest.git.createRef({
+    ...context.repo,
+    ref: `refs/heads/${branchName}`,
+    sha: context.sha,
   });
 
-  console.log(response);
+  console.log(
+    await github.rest.repos.createOrUpdateFileContents({
+      ...context.repo,
+      path: path.normalize(options.JSON_DATABASE_PATH),
+      message: `:link: create a new short url (alias: ${validatedAlias})`,
+      content: encodedContent,
+      branch: branchName,
+    })
+  );
+
+  console.log(
+    await github.rest.pulls.create({
+      ...context.repo,
+      head: branchName,
+      base: context.ref.split("/")[2],
+      title: `:link: create a new short url (alias: ${validatedAlias})`,
+      body: `close #${payload.issue.number}`,
+    })
+  );
 };
