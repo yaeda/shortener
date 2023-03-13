@@ -118,6 +118,7 @@ const creationTask = async ({ github, context, require, }, options) => {
     const shortUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/${validatedAlias}`;
     // database URL
     var databaseUrl = options.JSON_DATABASE_PATH;
+    var databaseSha = "";
     if (checkProgress.passedAliasValidation &&
         !checkProgress.passedAliasUniqueness) {
         try {
@@ -127,6 +128,7 @@ const creationTask = async ({ github, context, require, }, options) => {
             });
             if (!Array.isArray(data) && data.html_url !== null) {
                 databaseUrl = data.html_url;
+                databaseSha = data.sha;
             }
         }
         catch { }
@@ -172,6 +174,7 @@ const creationTask = async ({ github, context, require, }, options) => {
         message: `:link: create a new short url (alias: ${validatedAlias})`,
         content: encodedContent,
         branch: branchName,
+        sha: databaseSha,
     }));
     console.log(await github.rest.pulls.create({
         ...context.repo,

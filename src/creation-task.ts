@@ -173,6 +173,7 @@ export const creationTask = async (
 
   // database URL
   var databaseUrl = options.JSON_DATABASE_PATH;
+  var databaseSha = "";
   if (
     checkProgress.passedAliasValidation &&
     !checkProgress.passedAliasUniqueness
@@ -184,6 +185,7 @@ export const creationTask = async (
       });
       if (!Array.isArray(data) && data.html_url !== null) {
         databaseUrl = data.html_url;
+        databaseSha = data.sha;
       }
     } catch {}
   }
@@ -243,6 +245,7 @@ export const creationTask = async (
       message: `:link: create a new short url (alias: ${validatedAlias})`,
       content: encodedContent,
       branch: branchName,
+      sha: databaseSha,
     })
   );
 
