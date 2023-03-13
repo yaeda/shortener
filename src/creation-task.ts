@@ -174,10 +174,7 @@ export const creationTask = async (
   // database URL
   var databaseUrl = options.JSON_DATABASE_PATH;
   var databaseSha = "";
-  if (
-    checkProgress.passedAliasValidation &&
-    !checkProgress.passedAliasUniqueness
-  ) {
+  if (checkProgress.passedAliasValidation) {
     try {
       const { data } = await github.rest.repos.getContent({
         ...context.repo,
