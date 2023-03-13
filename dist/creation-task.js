@@ -12,32 +12,32 @@ const buildComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, repl
     // pre definition
     const indent = "    ";
     const markPassed = ":white_check_mark:";
-    const markFailed = ":x:";
+    const markFailed = ":warning:";
     const markNotStarted = ":heavy_minus_sign:";
     const markInprogress = ":hourglass_flowing_sand:";
     // title
-    const title = "## :robot: _**creating a new short url**_";
+    const title = ":robot: _**creating a new short url**_";
     // notice and status
     const status = [];
     if (checkProgress.passedUrlValidation) {
-        status.push(`- ${markPassed} **\`${validatedUrl}\`** is valid`);
+        status.push(`- ${markPassed} url (**\`${validatedUrl}\`**) is valid`);
     }
     else {
-        status.push(`- ${markFailed} **\`${url}\`** is not valid`);
+        status.push(`- ${markFailed} url (**\`${url}\`**) is not valid`);
     }
     if (checkProgress.passedAliasValidation) {
-        status.push(`- ${markPassed} **\`${validatedAlias}\`** is valid`);
+        status.push(`- ${markPassed} alias (**\`${validatedAlias}\`**) is valid`);
     }
     else {
-        status.push(`- ${markFailed} **\`${alias}\`** is not valid`);
+        status.push(`- ${markFailed} alias (**\`${alias}\`**) is not valid`);
         status.push(`${indent}- Only alphanumeric characters, \`-\` and \`_\` can be used for alias.`);
     }
     if (checkProgress.passedAliasUniqueness) {
-        status.push(`- ${markPassed} **\`${validatedAlias}\`** is unique`);
+        status.push(`- ${markPassed} alias (**\`${validatedAlias}\`**) is unique`);
     }
     else {
         if (checkProgress.passedAliasValidation) {
-            status.push(`- ${markFailed} **\`${alias}\`** is not unique`);
+            status.push(`- ${markFailed} alias (**\`${alias}\`**) is not unique`);
             status.push(`${indent}- See ${databaseUrl}.`);
         }
         else {
@@ -48,7 +48,7 @@ const buildComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, repl
         checkProgress.passedAliasValidation &&
         checkProgress.passedAliasUniqueness) {
         status.push(`- ${markInprogress} PR review & merge`);
-        status.push(`:link: ${shortUrl} will point to ${validateURL}`);
+        status.push(`\n:link: ${shortUrl} will point to ${validatedUrl}`);
     }
     else {
         status.push(`- ${markNotStarted} PR review & merge`);
@@ -117,22 +117,19 @@ const creationTask = async ({ github, require }, repo, payload, options) => {
     const shortUrl = `https://${repo.owner}.github.io/${repo.repo}/${validatedAlias}`;
     // database URL
     var databaseUrl = options.JSON_DATABASE_PATH;
-    // if (
-    //   checkProgress.passedAliasValidation &&
-    //   !checkProgress.passedAliasUniqueness
-    // ) {
-    try {
-        const { data } = await github.rest.repos.getContent({
-            ...repo,
-            path: path_1.default.normalize(options.JSON_DATABASE_PATH),
-        });
-        if (!Array.isArray(data) && data.html_url !== null) {
-            databaseUrl = data.html_url;
+    if (checkProgress.passedAliasValidation &&
+        !checkProgress.passedAliasUniqueness) {
+        try {
+            const { data } = await github.rest.repos.getContent({
+                ...repo,
+                path: path_1.default.normalize(options.JSON_DATABASE_PATH),
+            });
+            if (!Array.isArray(data) && data.html_url !== null) {
+                databaseUrl = data.html_url;
+            }
         }
+        catch { }
     }
-    catch { }
-    // }
-    console.log(databaseUrl);
     const commendBody = buildComment({
         url,
         validatedUrl,
