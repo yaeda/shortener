@@ -159,7 +159,7 @@ const creationTask = async ({ github, require }, repo, payload, options) => {
     dataList.push({ url: validatedUrl, alias: validatedAlias });
     const response = await github.rest.repos.createOrUpdateFileContents({
         ...repo,
-        path: options.JSON_DATABASE_PATH,
+        path: path_1.default.normalize(options.JSON_DATABASE_PATH),
         message: ":link: create a new short url",
         content: JSON.stringify(dataList, null, 2),
         branch: `create_short_url-${validatedAlias}`,

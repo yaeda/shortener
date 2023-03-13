@@ -3,9 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const build_task_1 = require("./build-task");
 const creation_task_1 = require("./creation-task");
 module.exports = async ({ github, context, core, io, exec, require, options, }) => {
-    console.log("=== print context ===");
-    console.log(context);
-    console.log("=====================");
+    // console.log("=== print context ===");
+    // console.log(context);
+    // console.log("=====================");
     switch (context.eventName) {
         case "push":
         case "workflow_dispatch":

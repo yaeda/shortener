@@ -221,7 +221,7 @@ export const creationTask = async (
 
   const response = await github.rest.repos.createOrUpdateFileContents({
     ...repo,
-    path: options.JSON_DATABASE_PATH,
+    path: path.normalize(options.JSON_DATABASE_PATH),
     message: ":link: create a new short url",
     content: JSON.stringify(dataList, null, 2),
     branch: `create_short_url-${validatedAlias}`,

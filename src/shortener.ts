@@ -30,9 +30,9 @@ module.exports = async ({
   require: NodeRequire;
   options: Options;
 }) => {
-  console.log("=== print context ===");
-  console.log(context);
-  console.log("=====================");
+  // console.log("=== print context ===");
+  // console.log(context);
+  // console.log("=====================");
   switch (context.eventName) {
     case "push":
     case "workflow_dispatch":
