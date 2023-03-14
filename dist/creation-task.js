@@ -4,9 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.creationTask = void 0;
-const crypto_1 = __importDefault(require("crypto"));
 const path_1 = __importDefault(require("path"));
 const issue_comment_1 = require("./issue-comment");
+const pull_request_1 = require("./pull-request");
+const validation_1 = require("./validation");
 // build comment
 const buildComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, replyName, databaseUrl, checkProgress, }) => {
     // pre definition
@@ -56,34 +57,6 @@ const buildComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, repl
     }
     return [title, ...status].join("\n");
 };
-const validateURL = (url) => {
-    if (url === undefined) {
-        return undefined;
-    }
-    try {
-        return new URL(url).href;
-    }
-    catch {
-        return undefined;
-    }
-};
-const validateAlias = (alias) => {
-    if (alias === undefined) {
-        return undefined;
-    }
-    return /^[\w-]+$/.test(alias) ? alias : undefined;
-};
-const checkAliasUniqueness = (alias, jsonDatabasePath, require) => {
-    const dataList = require(jsonDatabasePath);
-    return dataList.findIndex((data) => data.alias === alias) < 0;
-};
-const createUniqueAlias = (jsonDatabasePath, require) => {
-    let alias = crypto_1.default.randomBytes(4).toString("base64url");
-    while (!checkAliasUniqueness(alias, jsonDatabasePath, require)) {
-        alias = crypto_1.default.randomBytes(4).toString("base64url");
-    }
-    return alias;
-};
 const creationTask = async ({ github, context, require, }, options) => {
     const payload = context.payload;
     const checkProgress = {
@@ -99,37 +72,40 @@ const creationTask = async ({ github, context, require, }, options) => {
         .split(/\r\n|\n|\r/)
         .filter((line) => line.length && line[0] !== "#");
     // url validation
-    const validatedUrl = validateURL(url);
+    const validatedUrl = (0, validation_1.validateURL)(url);
     checkProgress.passedUrlValidation = validatedUrl !== undefined;
     // alias validation and uniqueness
     const needsAliasSuggestion = alias === "_No response_";
     const validatedAlias = needsAliasSuggestion
-        ? createUniqueAlias(options.JSON_DATABASE_PATH, require)
-        : validateAlias(alias);
+        ? (0, validation_1.createUniqueAlias)(options.JSON_DATABASE_PATH, require)
+        : (0, validation_1.validateAlias)(alias);
     if (needsAliasSuggestion) {
         checkProgress.passedAliasValidation = true;
         checkProgress.passedAliasUniqueness = true;
     }
     else if (validatedAlias !== undefined) {
         checkProgress.passedAliasValidation = true;
-        checkProgress.passedAliasUniqueness = checkAliasUniqueness(validatedAlias, options.JSON_DATABASE_PATH, require);
+        checkProgress.passedAliasUniqueness = (0, validation_1.checkAliasUniqueness)(validatedAlias, options.JSON_DATABASE_PATH, require);
     }
     // TODO: support custom domain
     const shortUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/${validatedAlias}`;
-    // database URL
-    var databaseUrl = options.JSON_DATABASE_PATH;
-    var databasePath = "";
-    var databaseSha = "";
+    // json database info
+    const jsonDatabaseInfo = {
+        url: options.JSON_DATABASE_PATH,
+        path: "",
+        sha: "",
+    };
     if (checkProgress.passedAliasValidation) {
         try {
             const { data } = await github.rest.repos.getContent({
                 ...context.repo,
                 path: path_1.default.normalize(options.JSON_DATABASE_PATH),
             });
-            if (!Array.isArray(data) && data.html_url !== null) {
-                databaseUrl = data.html_url;
-                databasePath = data.path;
-                databaseSha = data.sha;
+            if (!Array.isArray(data)) {
+                jsonDatabaseInfo.url =
+                    data.html_url !== null ? data.html_url : jsonDatabaseInfo.url;
+                jsonDatabaseInfo.path = data.path;
+                jsonDatabaseInfo.sha = data.sha;
             }
         }
         catch { }
@@ -141,7 +117,7 @@ const creationTask = async ({ github, context, require, }, options) => {
         alias,
         validatedAlias,
         replyName: payload.sender.login,
-        databaseUrl,
+        databaseUrl: jsonDatabaseInfo.url,
         checkProgress,
     });
     await (0, issue_comment_1.comment)({
@@ -161,30 +137,16 @@ const creationTask = async ({ github, context, require, }, options) => {
     // update json
     const dataList = require(options.JSON_DATABASE_PATH);
     dataList.push({ url: validatedUrl, alias: validatedAlias });
-    const encodedContent = Buffer.from(JSON.stringify(dataList, null, 2)).toString("base64");
-    // create branch
-    const branchName = `create_short_url-${payload.issue.number}-${validatedAlias}`;
-    await github.rest.git.createRef({
-        ...context.repo,
-        ref: `refs/heads/${branchName}`,
-        sha: context.sha,
-    });
-    // update database file
-    await github.rest.repos.createOrUpdateFileContents({
-        ...context.repo,
-        path: databasePath,
-        message: `:link: create a new short url (alias: ${validatedAlias})`,
-        content: encodedContent,
-        branch: branchName,
-        sha: databaseSha,
-    });
     // create pull request
-    await github.rest.pulls.create({
-        ...context.repo,
-        head: branchName,
-        base: context.ref.split("/")[2],
-        title: `:link: create a new short url (alias: ${validatedAlias})`,
-        body: `close #${payload.issue.number}`,
+    await (0, pull_request_1.createPullRequest)({
+        github,
+        context,
+        contentJson: dataList,
+        contentInfo: jsonDatabaseInfo,
+        branchName: `create_short_url-${payload.issue.number}-${validatedAlias}`,
+        commitMessage: `:link: create a new short url (alias: ${validatedAlias})`,
+        pullRequestTitle: `:link: create a new short url (alias: ${validatedAlias})`,
+        pullRequestBody: `closes #${payload.issue.number}`,
     });
 };
 exports.creationTask = creationTask;

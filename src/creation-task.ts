@@ -2,10 +2,16 @@ import type { Context } from "@actions/github/lib/context";
 import type { Octokit } from "@octokit/core";
 import type { Api } from "@octokit/plugin-rest-endpoint-methods/dist-types/types";
 import type { IssuesEvent } from "@octokit/webhooks-types";
-import crypto from "crypto";
 import path from "path";
 import { comment } from "./issue-comment";
 import type { Options } from "./options";
+import { createPullRequest } from "./pull-request";
+import {
+  checkAliasUniqueness,
+  createUniqueAlias,
+  validateAlias,
+  validateURL,
+} from "./validation";
 
 type CheckProgress = {
   passedUrlValidation: boolean;
@@ -87,41 +93,6 @@ const buildComment = ({
   return [title, ...status].join("\n");
 };
 
-const validateURL = (url?: string) => {
-  if (url === undefined) {
-    return undefined;
-  }
-  try {
-    return new URL(url).href;
-  } catch {
-    return undefined;
-  }
-};
-
-const validateAlias = (alias?: string) => {
-  if (alias === undefined) {
-    return undefined;
-  }
-  return /^[\w-]+$/.test(alias) ? alias : undefined;
-};
-
-const checkAliasUniqueness = (
-  alias: string,
-  jsonDatabasePath: string,
-  require: NodeRequire
-) => {
-  const dataList: { url: string; alias: string }[] = require(jsonDatabasePath);
-  return dataList.findIndex((data) => data.alias === alias) < 0;
-};
-
-const createUniqueAlias = (jsonDatabasePath: string, require: NodeRequire) => {
-  let alias = crypto.randomBytes(4).toString("base64url");
-  while (!checkAliasUniqueness(alias, jsonDatabasePath, require)) {
-    alias = crypto.randomBytes(4).toString("base64url");
-  }
-  return alias;
-};
-
 export const creationTask = async (
   {
     github,
@@ -129,7 +100,7 @@ export const creationTask = async (
     require,
   }: { github: Octokit & Api; context: Context; require: NodeRequire },
   options: Options
-): Promise<{ url: string; alias: string } | undefined> => {
+) => {
   const payload = context.payload as IssuesEvent;
 
   const checkProgress: CheckProgress = {
@@ -171,20 +142,23 @@ export const creationTask = async (
   // TODO: support custom domain
   const shortUrl = `https://${context.repo.owner}.github.io/${context.repo.repo}/${validatedAlias}`;
 
-  // database URL
-  var databaseUrl = options.JSON_DATABASE_PATH;
-  var databasePath = "";
-  var databaseSha = "";
+  // json database info
+  const jsonDatabaseInfo = {
+    url: options.JSON_DATABASE_PATH,
+    path: "",
+    sha: "",
+  };
   if (checkProgress.passedAliasValidation) {
     try {
       const { data } = await github.rest.repos.getContent({
         ...context.repo,
         path: path.normalize(options.JSON_DATABASE_PATH),
       });
-      if (!Array.isArray(data) && data.html_url !== null) {
-        databaseUrl = data.html_url;
-        databasePath = data.path;
-        databaseSha = data.sha;
+      if (!Array.isArray(data)) {
+        jsonDatabaseInfo.url =
+          data.html_url !== null ? data.html_url : jsonDatabaseInfo.url;
+        jsonDatabaseInfo.path = data.path;
+        jsonDatabaseInfo.sha = data.sha;
       }
     } catch {}
   }
@@ -196,9 +170,10 @@ export const creationTask = async (
     alias,
     validatedAlias,
     replyName: payload.sender.login,
-    databaseUrl,
+    databaseUrl: jsonDatabaseInfo.url,
     checkProgress,
   });
+
   await comment({
     github,
     ...context.repo,
@@ -225,34 +200,15 @@ export const creationTask = async (
   }[] = require(options.JSON_DATABASE_PATH);
   dataList.push({ url: validatedUrl, alias: validatedAlias });
 
-  const encodedContent = Buffer.from(
-    JSON.stringify(dataList, null, 2)
-  ).toString("base64");
-
-  // create branch
-  const branchName = `create_short_url-${payload.issue.number}-${validatedAlias}`;
-  await github.rest.git.createRef({
-    ...context.repo,
-    ref: `refs/heads/${branchName}`,
-    sha: context.sha,
-  });
-
-  // update database file
-  await github.rest.repos.createOrUpdateFileContents({
-    ...context.repo,
-    path: databasePath,
-    message: `:link: create a new short url (alias: ${validatedAlias})`,
-    content: encodedContent,
-    branch: branchName,
-    sha: databaseSha,
-  });
-
   // create pull request
-  await github.rest.pulls.create({
-    ...context.repo,
-    head: branchName,
-    base: context.ref.split("/")[2],
-    title: `:link: create a new short url (alias: ${validatedAlias})`,
-    body: `close #${payload.issue.number}`,
+  await createPullRequest({
+    github,
+    context,
+    contentJson: dataList,
+    contentInfo: jsonDatabaseInfo,
+    branchName: `create_short_url-${payload.issue.number}-${validatedAlias}`,
+    commitMessage: `:link: create a new short url (alias: ${validatedAlias})`,
+    pullRequestTitle: `:link: create a new short url (alias: ${validatedAlias})`,
+    pullRequestBody: `closes #${payload.issue.number}`,
   });
 };

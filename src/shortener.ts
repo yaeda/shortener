@@ -8,6 +8,7 @@ import type { Api } from "@octokit/plugin-rest-endpoint-methods/dist-types/types
 import type { IssuesEvent } from "@octokit/webhooks-types";
 import { buildTask } from "./build-task";
 import { creationTask } from "./creation-task";
+import { deletionTask } from "./deletion-task";
 import type { Options } from "./options";
 
 module.exports = async ({
@@ -36,16 +37,32 @@ module.exports = async ({
       await buildTask({ core, io, exec, require, options });
       return "success:on-push";
     case "issues":
-      const payload = context.payload as IssuesEvent;
-      payload.repository.html_url;
-      const { action, issue } = payload;
-      console.log(action);
-      console.log(issue.labels);
-      if (action === "opened" || action === "edited") {
-        creationTask({ github, context, require }, options);
-        return "success:on-issue";
+      const { action, issue } = context.payload as IssuesEvent;
+      if (action !== "opened" && action !== "edited") {
+        return "error:on-issue";
       }
-      return "error:on-issue";
+
+      const firstBody = issue.body?.split("\n")[0];
+      if (firstBody === undefined) {
+        return "error:on-issue";
+      }
+
+      const creationRE = /creat(e|ing)|add/i;
+      const deletionRE = /delet(e|ing)|remov(e|ing)/i;
+      if (
+        creationRE.test(issue.title) ||
+        creationRE.test(firstBody) ||
+        issue.labels?.some((label) => creationRE.test(label.name))
+      ) {
+        creationTask({ github, context, require }, options);
+      } else if (
+        deletionRE.test(issue.title) ||
+        deletionRE.test(firstBody) ||
+        issue.labels?.some((label) => deletionRE.test(label.name))
+      ) {
+        deletionTask({ github, context, require }, options);
+      }
+      return "success:on-issue";
   }
 
   core.warning(
