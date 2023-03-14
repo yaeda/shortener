@@ -18,8 +18,8 @@ module.exports = async ({ github, context, core, io, exec, require, options, }) 
             if (firstBody === undefined) {
                 return "error:on-issue";
             }
-            const creationRE = /creat(e|ing)|add/i;
-            const deletionRE = /delet(e|ing)|remov(e|ing)/i;
+            const creationRE = /creat|add/i;
+            const deletionRE = /delet|remov/i;
             if (creationRE.test(issue.title) ||
                 creationRE.test(firstBody) ||
                 issue.labels?.some((label) => creationRE.test(label.name))) {
