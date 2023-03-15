@@ -20,12 +20,18 @@ const createPullRequest = async ({ github, context, contentJson, contentInfo, br
         sha: contentInfo.sha,
     });
     // create pull request
-    await github.rest.pulls.create({
+    const pullInfo = await github.rest.pulls.create({
         ...context.repo,
         head: branchName,
         base: context.ref.split("/")[2],
         title: pullRequestTitle,
         body: pullRequestBody,
     });
+    // merge pull request
+    const mergeInfo = await github.rest.pulls.merge({
+        ...context.repo,
+        pull_number: pullInfo.data.number,
+    });
+    return mergeInfo.data.merged;
 };
 exports.createPullRequest = createPullRequest;

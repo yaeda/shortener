@@ -1,3 +1,5 @@
+import type { CreationProgress } from "./creation-task";
+
 const INDENT = "    ";
 const MARK_PASSED = ":white_check_mark:";
 const MARK_FAILED = ":warning:";
@@ -6,12 +8,6 @@ const MARK_NOT_STARTED = ":pause_button:";
 
 export const TITLE_FOR_CREATION = ":robot: _creating a new short url_";
 export const TITLE_FOR_DELETION = ":robot: _deleting a short url_";
-
-export type CheckProgress = {
-  passedUrlValidation: boolean;
-  passedAliasValidation: boolean;
-  passedAliasUniqueness: boolean;
-};
 
 //
 // ============= [success cases] =============
@@ -43,7 +39,7 @@ export const buildCreationComment = ({
   validatedAlias,
   replyName,
   databaseUrl,
-  checkProgress,
+  progress,
 }: {
   url?: string;
   validatedUrl?: string;
@@ -52,18 +48,18 @@ export const buildCreationComment = ({
   validatedAlias?: string;
   replyName: string;
   databaseUrl: string | null;
-  checkProgress: CheckProgress;
+  progress: CreationProgress;
 }) => {
   // notice and status
   const status: string[] = [];
 
-  if (checkProgress.passedUrlValidation) {
+  if (progress.passedUrlValidation) {
     status.push(`- ${MARK_PASSED} URL (**\`${validatedUrl}\`**) is valid`);
   } else {
     status.push(`- ${MARK_FAILED} URL (**\`${url}\`**) is not valid`);
   }
 
-  if (checkProgress.passedAliasValidation) {
+  if (progress.passedAliasValidation) {
     status.push(`- ${MARK_PASSED} Alias (**\`${validatedAlias}\`**) is valid`);
   } else {
     status.push(`- ${MARK_FAILED} Alias (**\`${alias}\`**) is not valid`);
@@ -72,10 +68,10 @@ export const buildCreationComment = ({
     );
   }
 
-  if (checkProgress.passedAliasUniqueness) {
+  if (progress.passedAliasUniqueness) {
     status.push(`- ${MARK_PASSED} Alias (**\`${validatedAlias}\`**) is unique`);
   } else {
-    if (checkProgress.passedAliasValidation) {
+    if (progress.passedAliasValidation) {
       status.push(`- ${MARK_FAILED} Alias (**\`${alias}\`**) is not unique`);
       status.push(`${INDENT}- See ${databaseUrl}.`);
     } else {
@@ -84,13 +80,21 @@ export const buildCreationComment = ({
   }
 
   if (
-    checkProgress.passedUrlValidation &&
-    checkProgress.passedAliasValidation &&
-    checkProgress.passedAliasUniqueness
+    progress.passedUrlValidation &&
+    progress.passedAliasValidation &&
+    progress.passedAliasUniqueness
   ) {
-    status.push(`- ${MARK_PASSED} Pull request is created`);
-    status.push("\n");
-    status.push(`:link: **${shortUrl} will point to ${validatedUrl}.**`);
+    if (progress.merged) {
+      status.push(`- ${MARK_PASSED} Pull request is created and merged`);
+      status.push("\n");
+      status.push(`:link: **${shortUrl} will point to ${validatedUrl}.**`);
+    } else {
+      status.push(`- ${MARK_PASSED} Pull request is created`);
+      status.push("\n");
+      status.push(
+        `:link: **${shortUrl} will point to ${validatedUrl} after PR is merged.**`
+      );
+    }
   } else {
     status.push(`- ${MARK_NOT_STARTED} Pull request creation`);
     status.push("\n");

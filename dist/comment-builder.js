@@ -30,27 +30,27 @@ exports.TITLE_FOR_DELETION = ":robot: _deleting a short url_";
 //
 // :bell: **@${reply} Please edit issue to fix above.**
 //
-const buildCreationComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, replyName, databaseUrl, checkProgress, }) => {
+const buildCreationComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, replyName, databaseUrl, progress, }) => {
     // notice and status
     const status = [];
-    if (checkProgress.passedUrlValidation) {
+    if (progress.passedUrlValidation) {
         status.push(`- ${MARK_PASSED} URL (**\`${validatedUrl}\`**) is valid`);
     }
     else {
         status.push(`- ${MARK_FAILED} URL (**\`${url}\`**) is not valid`);
     }
-    if (checkProgress.passedAliasValidation) {
+    if (progress.passedAliasValidation) {
         status.push(`- ${MARK_PASSED} Alias (**\`${validatedAlias}\`**) is valid`);
     }
     else {
         status.push(`- ${MARK_FAILED} Alias (**\`${alias}\`**) is not valid`);
         status.push(`${INDENT}- Only alphanumeric characters, \`-\` and \`_\` can be used for alias.`);
     }
-    if (checkProgress.passedAliasUniqueness) {
+    if (progress.passedAliasUniqueness) {
         status.push(`- ${MARK_PASSED} Alias (**\`${validatedAlias}\`**) is unique`);
     }
     else {
-        if (checkProgress.passedAliasValidation) {
+        if (progress.passedAliasValidation) {
             status.push(`- ${MARK_FAILED} Alias (**\`${alias}\`**) is not unique`);
             status.push(`${INDENT}- See ${databaseUrl}.`);
         }
@@ -58,12 +58,19 @@ const buildCreationComment = ({ url, validatedUrl, shortUrl, alias, validatedAli
             status.push(`- ${MARK_NOT_STARTED} Alias uniqueness`);
         }
     }
-    if (checkProgress.passedUrlValidation &&
-        checkProgress.passedAliasValidation &&
-        checkProgress.passedAliasUniqueness) {
-        status.push(`- ${MARK_PASSED} Pull request is created`);
-        status.push("\n");
-        status.push(`:link: **${shortUrl} will point to ${validatedUrl}.**`);
+    if (progress.passedUrlValidation &&
+        progress.passedAliasValidation &&
+        progress.passedAliasUniqueness) {
+        if (progress.merged) {
+            status.push(`- ${MARK_PASSED} Pull request is created and merged`);
+            status.push("\n");
+            status.push(`:link: **${shortUrl} will point to ${validatedUrl}.**`);
+        }
+        else {
+            status.push(`- ${MARK_PASSED} Pull request is created`);
+            status.push("\n");
+            status.push(`:link: **${shortUrl} will point to ${validatedUrl} after PR is merged.**`);
+        }
     }
     else {
         status.push(`- ${MARK_NOT_STARTED} Pull request creation`);

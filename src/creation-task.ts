@@ -3,7 +3,7 @@ import type { Octokit } from "@octokit/core";
 import type { Api } from "@octokit/plugin-rest-endpoint-methods/dist-types/types";
 import type { IssuesEvent } from "@octokit/webhooks-types";
 import path from "path";
-import { buildCreationComment, CheckProgress } from "./comment-builder";
+import { buildCreationComment } from "./comment-builder";
 import { comment } from "./issue-comment";
 import type { Options } from "./options";
 import { createPullRequest } from "./pull-request";
@@ -13,6 +13,13 @@ import {
   validateAlias,
   validateURL,
 } from "./validation";
+
+export type CreationProgress = {
+  passedUrlValidation: boolean;
+  passedAliasValidation: boolean;
+  passedAliasUniqueness: boolean;
+  merged: boolean;
+};
 
 export const creationTask = async (
   {
@@ -24,10 +31,11 @@ export const creationTask = async (
 ) => {
   const payload = context.payload as IssuesEvent;
 
-  const checkProgress: CheckProgress = {
+  const progress: CreationProgress = {
     passedUrlValidation: false,
     passedAliasValidation: false,
     passedAliasUniqueness: false,
+    merged: false,
   };
 
   if (payload.issue.body == null) {
@@ -41,7 +49,7 @@ export const creationTask = async (
 
   // url validation
   const validatedUrl = validateURL(url);
-  checkProgress.passedUrlValidation = validatedUrl !== undefined;
+  progress.passedUrlValidation = validatedUrl !== undefined;
 
   // alias validation and uniqueness
   const needsAliasSuggestion = alias === "_No response_";
@@ -49,11 +57,11 @@ export const creationTask = async (
     ? createUniqueAlias(options.JSON_DATABASE_PATH, require)
     : validateAlias(alias);
   if (needsAliasSuggestion) {
-    checkProgress.passedAliasValidation = true;
-    checkProgress.passedAliasUniqueness = true;
+    progress.passedAliasValidation = true;
+    progress.passedAliasUniqueness = true;
   } else if (validatedAlias !== undefined) {
-    checkProgress.passedAliasValidation = true;
-    checkProgress.passedAliasUniqueness = checkAliasUniqueness(
+    progress.passedAliasValidation = true;
+    progress.passedAliasUniqueness = checkAliasUniqueness(
       validatedAlias,
       options.JSON_DATABASE_PATH,
       require
@@ -69,7 +77,7 @@ export const creationTask = async (
     path: "",
     sha: "",
   };
-  if (checkProgress.passedAliasValidation) {
+  if (progress.passedAliasValidation) {
     try {
       const { data } = await github.rest.repos.getContent({
         ...context.repo,
@@ -84,6 +92,35 @@ export const creationTask = async (
     } catch {}
   }
 
+  const passedAllValidation =
+    progress.passedUrlValidation &&
+    progress.passedAliasValidation &&
+    progress.passedAliasUniqueness &&
+    validatedUrl !== undefined &&
+    validatedAlias !== undefined;
+
+  if (passedAllValidation) {
+    // update json
+    const dataList: {
+      url: string;
+      alias: string;
+    }[] = require(options.JSON_DATABASE_PATH);
+    dataList.push({ url: validatedUrl, alias: validatedAlias });
+
+    // create & merge pull request
+    progress.merged = await createPullRequest({
+      github,
+      context,
+      contentJson: dataList,
+      contentInfo: jsonDatabaseInfo,
+      branchName: `create_short_url-${payload.issue.number}-${validatedAlias}`,
+      commitMessage: `:link: create a new short url (alias: ${validatedAlias})`,
+      pullRequestTitle: `:link: create a new short url (alias: ${validatedAlias})`,
+      pullRequestBody: `closes #${payload.issue.number}`,
+    });
+  }
+
+  // comment issue
   const commendBody = buildCreationComment({
     url,
     validatedUrl,
@@ -92,7 +129,7 @@ export const creationTask = async (
     validatedAlias,
     replyName: payload.sender.login,
     databaseUrl: jsonDatabaseInfo.url,
-    checkProgress,
+    progress,
   });
 
   await comment({
@@ -100,36 +137,5 @@ export const creationTask = async (
     ...context.repo,
     issue_number: payload.issue.number,
     body: commendBody,
-  });
-
-  const allPassed =
-    checkProgress.passedUrlValidation &&
-    checkProgress.passedAliasValidation &&
-    checkProgress.passedAliasUniqueness;
-  if (
-    !allPassed ||
-    validatedUrl === undefined ||
-    validatedAlias === undefined
-  ) {
-    return;
-  }
-
-  // update json
-  const dataList: {
-    url: string;
-    alias: string;
-  }[] = require(options.JSON_DATABASE_PATH);
-  dataList.push({ url: validatedUrl, alias: validatedAlias });
-
-  // create pull request
-  await createPullRequest({
-    github,
-    context,
-    contentJson: dataList,
-    contentInfo: jsonDatabaseInfo,
-    branchName: `create_short_url-${payload.issue.number}-${validatedAlias}`,
-    commitMessage: `:link: create a new short url (alias: ${validatedAlias})`,
-    pullRequestTitle: `:link: create a new short url (alias: ${validatedAlias})`,
-    pullRequestBody: `closes #${payload.issue.number}`,
   });
 };
