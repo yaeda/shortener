@@ -27,11 +27,12 @@ const createPullRequest = async ({ github, context, contentJson, contentInfo, br
         title: pullRequestTitle,
         body: pullRequestBody,
     });
+    return false;
     // merge pull request
-    const mergeInfo = await github.rest.pulls.merge({
-        ...context.repo,
-        pull_number: pullInfo.data.number,
-    });
-    return mergeInfo.data.merged;
+    // const mergeInfo = await github.rest.pulls.merge({
+    //   ...context.repo,
+    //   pull_number: pullInfo.data.number,
+    // });
+    //return mergeInfo.data.merged;
 };
 exports.createPullRequest = createPullRequest;

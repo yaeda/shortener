@@ -52,11 +52,13 @@ export const createPullRequest = async ({
     body: pullRequestBody,
   });
 
-  // merge pull request
-  const mergeInfo = await github.rest.pulls.merge({
-    ...context.repo,
-    pull_number: pullInfo.data.number,
-  });
+  return false;
 
-  return mergeInfo.data.merged;
+  // merge pull request
+  // const mergeInfo = await github.rest.pulls.merge({
+  //   ...context.repo,
+  //   pull_number: pullInfo.data.number,
+  // });
+
+  //return mergeInfo.data.merged;
 };
