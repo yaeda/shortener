@@ -5,58 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.creationTask = void 0;
 const path_1 = __importDefault(require("path"));
+const comment_builder_1 = require("./comment-builder");
 const issue_comment_1 = require("./issue-comment");
 const pull_request_1 = require("./pull-request");
 const validation_1 = require("./validation");
-// build comment
-const buildComment = ({ url, validatedUrl, shortUrl, alias, validatedAlias, replyName, databaseUrl, checkProgress, }) => {
-    // pre definition
-    const indent = "    ";
-    const markPassed = ":white_check_mark:";
-    const markFailed = ":warning:";
-    const markNotStarted = ":pause_button:";
-    const markInprogress = ":hourglass_flowing_sand:";
-    // title
-    const title = ":robot: _**creating a new short url**_";
-    // notice and status
-    const status = [];
-    if (checkProgress.passedUrlValidation) {
-        status.push(`- ${markPassed} url (**\`${validatedUrl}\`**) is valid`);
-    }
-    else {
-        status.push(`- ${markFailed} url (**\`${url}\`**) is not valid`);
-    }
-    if (checkProgress.passedAliasValidation) {
-        status.push(`- ${markPassed} alias (**\`${validatedAlias}\`**) is valid`);
-    }
-    else {
-        status.push(`- ${markFailed} alias (**\`${alias}\`**) is not valid`);
-        status.push(`${indent}- Only alphanumeric characters, \`-\` and \`_\` can be used for alias.`);
-    }
-    if (checkProgress.passedAliasUniqueness) {
-        status.push(`- ${markPassed} alias (**\`${validatedAlias}\`**) is unique`);
-    }
-    else {
-        if (checkProgress.passedAliasValidation) {
-            status.push(`- ${markFailed} alias (**\`${alias}\`**) is not unique`);
-            status.push(`${indent}- See ${databaseUrl}.`);
-        }
-        else {
-            status.push(`- ${markNotStarted} alias uniqueness`);
-        }
-    }
-    if (checkProgress.passedUrlValidation &&
-        checkProgress.passedAliasValidation &&
-        checkProgress.passedAliasUniqueness) {
-        status.push(`- ${markInprogress} PR review & merge`);
-        status.push(`\n:link: ${shortUrl} will point to ${validatedUrl}`);
-    }
-    else {
-        status.push(`- ${markNotStarted} PR review & merge`);
-        status.push(`\n@${replyName} Please edit issue to fix above.`);
-    }
-    return [title, ...status].join("\n");
-};
 const creationTask = async ({ github, context, require, }, options) => {
     const payload = context.payload;
     const checkProgress = {
@@ -110,7 +62,7 @@ const creationTask = async ({ github, context, require, }, options) => {
         }
         catch { }
     }
-    const commendBody = buildComment({
+    const commendBody = (0, comment_builder_1.buildCreationComment)({
         url,
         validatedUrl,
         shortUrl,

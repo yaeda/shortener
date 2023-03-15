@@ -3,72 +3,11 @@ import type { Octokit } from "@octokit/core";
 import type { Api } from "@octokit/plugin-rest-endpoint-methods/dist-types/types";
 import type { IssuesEvent } from "@octokit/webhooks-types";
 import path from "path";
+import { buildDeletionComment } from "./comment-builder";
 import { comment } from "./issue-comment";
 import type { Options } from "./options";
 import { createPullRequest } from "./pull-request";
 import { checkAliasUniqueness } from "./validation";
-
-// build comment
-const buildComment = ({
-  shortUrl,
-  alias,
-  replyName,
-  databaseUrl,
-  isFound,
-}: {
-  alias?: string;
-  shortUrl?: string;
-  replyName: string;
-  databaseUrl: string | null;
-  isFound: boolean;
-}) => {
-  //
-  // ============= [success cases] =============
-  // :robot: _**deleting a short url**_
-  //
-  // - :white_check_mark: alias (**`${alias}`**) is found
-  // - :hourglass_flowing_sand: pull request review & marge
-  //
-  // :link: ${shortUrl} will be deleted
-  //
-  // ============== [error cases] ==============
-  // :robot: _**deleting a short url**_
-  //
-  // - :warning: alias (**`${alias}`**) is not found
-  //     - See ${databaseUrl}.;
-  // - :pause_button: pull request review & marge
-  //
-  // :bell: @${reply} Please edit issue to fix above.
-  //
-
-  // pre definition
-  const indent = "    ";
-  const markPassed = ":white_check_mark:";
-  const markFailed = ":warning:";
-  const markNotStarted = ":pause_button:";
-  const markInprogress = ":hourglass_flowing_sand:";
-
-  // title
-  const title = ":robot: _**deleting a short url**_";
-
-  // notice and status
-  const status: string[] = [];
-
-  if (isFound) {
-    status.push(`- ${markPassed} alias (**\`${alias}\`**) is found`);
-    status.push(`- ${markInprogress} pull request review & merge`);
-    status.push("\n");
-    status.push(`:link: ${shortUrl} will be removed`);
-  } else {
-    status.push(`- ${markFailed} alias (**\`${alias}\`**) is not found`);
-    status.push(`${indent}- See ${databaseUrl}.`);
-    status.push(`- ${markNotStarted} pull request review & merge`);
-    status.push("\n");
-    status.push(`:bell:@${replyName} Please edit issue to fix above.`);
-  }
-
-  return [title, ...status].join("\n");
-};
 
 export const deletionTask = async (
   {
@@ -117,7 +56,7 @@ export const deletionTask = async (
     }
   } catch {}
 
-  const commendBody = buildComment({
+  const commendBody = buildDeletionComment({
     shortUrl,
     alias,
     replyName: payload.sender.login,

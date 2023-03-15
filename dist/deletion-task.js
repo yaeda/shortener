@@ -5,54 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deletionTask = void 0;
 const path_1 = __importDefault(require("path"));
+const comment_builder_1 = require("./comment-builder");
 const issue_comment_1 = require("./issue-comment");
 const pull_request_1 = require("./pull-request");
 const validation_1 = require("./validation");
-// build comment
-const buildComment = ({ shortUrl, alias, replyName, databaseUrl, isFound, }) => {
-    //
-    // ============= [success cases] =============
-    // :robot: _**deleting a short url**_
-    //
-    // - :white_check_mark: alias (**`${alias}`**) is found
-    // - :hourglass_flowing_sand: pull request review & marge
-    //
-    // :link: ${shortUrl} will be deleted
-    //
-    // ============== [error cases] ==============
-    // :robot: _**deleting a short url**_
-    //
-    // - :warning: alias (**`${alias}`**) is not found
-    //     - See ${databaseUrl}.;
-    // - :pause_button: pull request review & marge
-    //
-    // :bell: @${reply} Please edit issue to fix above.
-    //
-    // pre definition
-    const indent = "    ";
-    const markPassed = ":white_check_mark:";
-    const markFailed = ":warning:";
-    const markNotStarted = ":pause_button:";
-    const markInprogress = ":hourglass_flowing_sand:";
-    // title
-    const title = ":robot: _**deleting a short url**_";
-    // notice and status
-    const status = [];
-    if (isFound) {
-        status.push(`- ${markPassed} alias (**\`${alias}\`**) is found`);
-        status.push(`- ${markInprogress} pull request review & merge`);
-        status.push("\n");
-        status.push(`:link: ${shortUrl} will be removed`);
-    }
-    else {
-        status.push(`- ${markFailed} alias (**\`${alias}\`**) is not found`);
-        status.push(`${indent}- See ${databaseUrl}.`);
-        status.push(`- ${markNotStarted} pull request review & merge`);
-        status.push("\n");
-        status.push(`:bell:@${replyName} Please edit issue to fix above.`);
-    }
-    return [title, ...status].join("\n");
-};
 const deletionTask = async ({ github, context, require, }, options) => {
     const payload = context.payload;
     if (payload.issue.body == null) {
@@ -85,7 +41,7 @@ const deletionTask = async ({ github, context, require, }, options) => {
         }
     }
     catch { }
-    const commendBody = buildComment({
+    const commendBody = (0, comment_builder_1.buildDeletionComment)({
         shortUrl,
         alias,
         replyName: payload.sender.login,
